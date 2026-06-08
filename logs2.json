@@ -1,0 +1,117 @@
+[
+  {
+    "insertId": "6a22fd49000671f41587c630",
+    "labels": {
+      "instanceId": "0007b734d96eb41cfff06ef9bb4476092501de5f08718e13210591a719c4c2773c623ec473223e2ac8d39b261a9a43fabbe1bf57457e07359cf8c94efc7df3f4485b0a5838597991e132659f57a4"
+    },
+    "logName": "projects/invoice-pipeline-498415/logs/run.googleapis.com%2Fvarlog%2Fsystem",
+    "receiveTimestamp": "2026-06-05T16:46:01.450829114Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "email-parser",
+        "location": "us-central1",
+        "project_id": "invoice-pipeline-498415",
+        "revision_name": "email-parser-00005-7bd",
+        "service_name": "email-parser"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "ERROR",
+    "textPayload": "Cloud SQL connection failed. Please see https://cloud.google.com/sql/docs/mysql/connect-run, https://cloud.google.com/sql/docs/postgres/connect-run, or https://cloud.google.com/sql/docs/sqlserver/connect-run for additional details: failed to get instance: refresh error: failed to get instance metadata (connection name = \"invoice-pipeline-498415:us-central1:invoice-pipeline-db\"): googleapi: Error 403: boss::NOT_AUTHORIZED: Not authorized to access resource. Possibly missing permission cloudsql.instances.get on resource instances/invoice-pipeline-db., forbidden",
+    "timestamp": "2026-06-05T16:46:01.422388Z"
+  },
+  {
+    "insertId": "6a22fd47000653e9a9924feb",
+    "labels": {
+      "instanceId": "0007b734d96eb41cfff06ef9bb4476092501de5f08718e13210591a719c4c2773c623ec473223e2ac8d39b261a9a43fabbe1bf57457e07359cf8c94efc7df3f4485b0a5838597991e132659f57a4"
+    },
+    "logName": "projects/invoice-pipeline-498415/logs/run.googleapis.com%2Fvarlog%2Fsystem",
+    "receiveTimestamp": "2026-06-05T16:45:59.451606484Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "email-parser",
+        "location": "us-central1",
+        "project_id": "invoice-pipeline-498415",
+        "revision_name": "email-parser-00005-7bd",
+        "service_name": "email-parser"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "ERROR",
+    "textPayload": "Cloud SQL connection failed. Please see https://cloud.google.com/sql/docs/mysql/connect-run, https://cloud.google.com/sql/docs/postgres/connect-run, or https://cloud.google.com/sql/docs/sqlserver/connect-run for additional details: failed to get instance: refresh error: failed to get instance metadata (connection name = \"invoice-pipeline-498415:us-central1:invoice-pipeline-db\"): googleapi: Error 403: boss::NOT_AUTHORIZED: Not authorized to access resource. Possibly missing permission cloudsql.instances.get on resource instances/invoice-pipeline-db., forbidden",
+    "timestamp": "2026-06-05T16:45:59.414697Z"
+  },
+  {
+    "insertId": "6a22fd420001ed27118236b7",
+    "labels": {
+      "instanceId": "0007b734d96eb41cfff06ef9bb4476092501de5f08718e13210591a719c4c2773c623ec473223e2ac8d39b261a9a43fabbe1bf57457e07359cf8c94efc7df3f4485b0a5838597991e132659f57a4"
+    },
+    "logName": "projects/invoice-pipeline-498415/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2026-06-05T16:45:54.235002118Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "email-parser",
+        "location": "us-central1",
+        "project_id": "invoice-pipeline-498415",
+        "revision_name": "email-parser-00005-7bd",
+        "service_name": "email-parser"
+      },
+      "type": "cloud_run_revision"
+    },
+    "textPayload": "method=POST path=\"/webhook/gmail\" status=500 duration_ms=141069 bytes=21",
+    "timestamp": "2026-06-05T16:45:54.126247Z"
+  },
+  {
+    "errorGroups": [
+      {
+        "id": "COea1rmbz-f0uAE"
+      }
+    ],
+    "insertId": "6a22fd420001e922314bc7ba",
+    "jsonPayload": {
+      "error": "connection to server on socket \"/cloudsql/invoice-pipeline-498415:us-central1:invoice-pipeline-db/.s.PGSQL.5432\" failed: Connection refused\n\tIs the server running locally and accepting connections on that socket?\n",
+      "event": "gmail_webhook.processing_failed",
+      "level": "error",
+      "timestamp": "2026-06-05T16:45:54.126180Z",
+      "trace": "501c1b145c178152845670440bcc5bf2",
+      "traceback": "Traceback (most recent call last):\n  File \"/app/app/main.py\", line 97, in gmail_webhook\n    processor = EmailProcessor(settings, gmail)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/app/processor.py\", line 33, in __init__\n    self._db = Database(settings)\n               ^^^^^^^^^^^^^^^^^^\n  File \"/app/app/db.py\", line 15, in __init__\n    self._pool = psycopg2.pool.ThreadedConnectionPool(\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg2/pool.py\", line 161, in __init__\n    AbstractConnectionPool.__init__(\n  File \"/usr/local/lib/python3.12/site-packages/psycopg2/pool.py\", line 59, in __init__\n    self._connect()\n  File \"/usr/local/lib/python3.12/site-packages/psycopg2/pool.py\", line 63, in _connect\n    conn = psycopg2.connect(*self._args, **self._kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/psycopg2/__init__.py\", line 122, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\npsycopg2.OperationalError: connection to server on socket \"/cloudsql/invoice-pipeline-498415:us-central1:invoice-pipeline-db/.s.PGSQL.5432\" failed: Connection refused\n\tIs the server running locally and accepting connections on that socket?\n\n"
+    },
+    "labels": {
+      "instanceId": "0007b734d96eb41cfff06ef9bb4476092501de5f08718e13210591a719c4c2773c623ec473223e2ac8d39b261a9a43fabbe1bf57457e07359cf8c94efc7df3f4485b0a5838597991e132659f57a4"
+    },
+    "logName": "projects/invoice-pipeline-498415/logs/run.googleapis.com%2Fstdout",
+    "receiveTimestamp": "2026-06-05T16:45:54.235002118Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "email-parser",
+        "location": "us-central1",
+        "project_id": "invoice-pipeline-498415",
+        "revision_name": "email-parser-00005-7bd",
+        "service_name": "email-parser"
+      },
+      "type": "cloud_run_revision"
+    },
+    "timestamp": "2026-06-05T16:45:54.125218Z"
+  },
+  {
+    "insertId": "6a22fd420001e5b373e5305c",
+    "labels": {
+      "instanceId": "0007b734d96eb41cfff06ef9bb4476092501de5f08718e13210591a719c4c2773c623ec473223e2ac8d39b261a9a43fabbe1bf57457e07359cf8c94efc7df3f4485b0a5838597991e132659f57a4"
+    },
+    "logName": "projects/invoice-pipeline-498415/logs/run.googleapis.com%2Fvarlog%2Fsystem",
+    "receiveTimestamp": "2026-06-05T16:45:54.454644237Z",
+    "resource": {
+      "labels": {
+        "configuration_name": "email-parser",
+        "location": "us-central1",
+        "project_id": "invoice-pipeline-498415",
+        "revision_name": "email-parser-00005-7bd",
+        "service_name": "email-parser"
+      },
+      "type": "cloud_run_revision"
+    },
+    "severity": "ERROR",
+    "textPayload": "Cloud SQL connection failed. Please see https://cloud.google.com/sql/docs/mysql/connect-run, https://cloud.google.com/sql/docs/postgres/connect-run, or https://cloud.google.com/sql/docs/sqlserver/connect-run for additional details: failed to get instance: refresh error: failed to get instance metadata (connection name = \"invoice-pipeline-498415:us-central1:invoice-pipeline-db\"): googleapi: Error 403: boss::NOT_AUTHORIZED: Not authorized to access resource. Possibly missing permission cloudsql.instances.get on resource instances/invoice-pipeline-db., forbidden",
+    "timestamp": "2026-06-05T16:45:54.124339Z"
+  }
+]

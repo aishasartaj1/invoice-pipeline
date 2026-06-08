@@ -1,0 +1,4 @@
+echo token.txt >> C:\invoice-pipeline\.gitignore
+echo setup_watch.py >> C:\invoice-pipeline\.gitignore
+echo *.json >> C:\invoice-pipeline\.gitignore
+echo .env >> C:\invoice-pipeline\.gitignore
