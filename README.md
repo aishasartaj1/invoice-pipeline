@@ -1,49 +1,104 @@
 # Invoice Processing Pipeline
 
-An event-driven invoice processing pipeline on Google Cloud Platform that automatically extracts structured data from invoice emails using Gemini AI.
+An event-driven invoice processing pipeline on Google Cloud Platform that automatically extracts structured data from invoice emails using Gemini AI — with built-in confidence scoring and human review routing.
 
 ## Live Demo
 
-🖥️ **Dashboard:** https://dashboard-frontend-290164040879.us-central1.run.app
+Dashboard: https://dashboard-frontend-290164040879.us-central1.run.app
 
-📧 **To test:** Send an invoice PDF to `invoices.processor.aishasartaj@gmail.com` — it will appear on the dashboard within ~60 seconds, fully extracted by Gemini AI.
+To test: Send an invoice PDF to invoices.processor.aishasartaj@gmail.com
+It will appear on the dashboard within ~60 seconds, fully extracted by Gemini AI.
 
 ## Architecture
 
-Gmail → Cloud Run Parser → GCS → Pub/Sub → Cloud Run Worker → Gemini AI → PostgreSQL → Dashboard
+```
+Vendor Email
+     |
+     v
+Gmail Inbox (invoices.processor.aishasartaj@gmail.com)
+     |
+     | Push notification (Gmail Watch API)
+     v
+email-parser (Cloud Run)
+     |-- Downloads PDF attachment
+     |-- Uploads to Cloud Storage
+     |-- Inserts row into raw_emails (PostgreSQL)
+     |-- Publishes event to attachment-events (Pub/Sub)
+     |
+     v
+invoice-worker (Cloud Run)
+     |-- Downloads PDF from Cloud Storage
+     |-- Extracts text (pypdf)
+     |
+     |-- Gemini 2.5 Flash: Classify
+     |       < 50% confidence → SKIPPED (not an invoice)
+     |
+     |-- Gemini 2.5 Flash: Extract fields
+     |       vendor, invoice number, date, total amount, currency
+     |
+     |-- Confidence routing:
+     |       >= 85% → status: processed (auto)
+     |       < 85%  → status: review → published to invoice-review-queue
+     |
+     |-- Writes to invoices table (PostgreSQL)
+     |
+     v
+dashboard-api (Cloud Run)
+     |-- GET /api/invoices
+     |-- GET /api/stats
+     |
+     v
+dashboard-frontend (Cloud Run)
+     |-- Live dashboard auto-refreshing every 30s
+     |-- Stats: total invoices, total value, avg confidence, needs review
+     |-- Invoice table: vendor, amount, date, status, confidence bar
+```
 
 ## Services
 
-- **email-parser** — receives Gmail push notifications, fetches emails, uploads attachments to GCS, publishes Pub/Sub events
-- **invoice-worker** — downloads PDFs from GCS, classifies and extracts invoice fields using Gemini 2.5 Flash, writes to PostgreSQL
-- **dashboard-api** — read-only Flask API serving invoice data from PostgreSQL
-- **dashboard-frontend** — live dashboard showing processed invoices, totals and confidence scores
+- **email-parser** — Flask service triggered by Gmail push notifications. Fetches emails, uploads PDF attachments to GCS, inserts raw_emails rows, publishes Pub/Sub events. Tracks last processed Gmail history ID in PostgreSQL to avoid missed or duplicate messages.
+
+- **invoice-worker** — Flask service triggered by Pub/Sub push. Downloads PDFs from GCS, extracts text with pypdf, runs two-stage Gemini classification and extraction. Routes low-confidence invoices to a human review queue.
+
+- **dashboard-api** — Lightweight read-only Flask API. Reads from PostgreSQL and serves invoice data and aggregated stats to the frontend.
+
+- **dashboard-frontend** — Static dashboard served via nginx. Auto-refreshes every 30 seconds. Shows real-time invoice processing results.
+
+## Confidence & Review System
+
+Gemini extraction returns a confidence score (0.0 to 1.0) for each invoice:
+
+| Confidence | Action |
+|---|---|
+| < 0.50 | Document skipped — not classified as an invoice |
+| 0.50 to 0.84 | Flagged as needs review — published to invoice-review-queue topic |
+| >= 0.85 | Auto-processed — written directly to invoices table |
+
+The threshold is configurable via the CONFIDENCE_THRESHOLD environment variable (default: 0.85).
 
 ## Stack
 
-- **Google Cloud Run** — parser, worker, dashboard API and frontend
-- **Cloud SQL (PostgreSQL)** — structured invoice data storage
-- **Cloud Pub/Sub** — decoupled event queue between parser and worker
-- **Cloud Storage** — raw PDF attachment archive (7-year retention)
-- **Secret Manager** — all credentials stored securely, nothing in code
-- **Vertex AI (Gemini 2.5 Flash)** — invoice classification and field extraction
-- **Python, Flask** — backend services
-- **Gmail API** — push notifications via watch()
+- **Google Cloud Run** — all four services, scales to zero when idle
+- **Cloud SQL PostgreSQL 15** — raw_emails, invoices, processing_jobs, pipeline_metrics, gmail_state tables
+- **Cloud Pub/Sub** — attachment-events (parser to worker), invoice-review-queue (low confidence), invoice-dead-letter (failed after 5 attempts)
+- **Cloud Storage** — raw PDF archive with 7-year retention policy
+- **Secret Manager** — all credentials stored securely, nothing hardcoded in code or env vars
+- **Vertex AI (Gemini 2.5 Flash)** — document classification and structured field extraction
+- **Gmail API** — push notifications via watch(), history ID state tracked in DB
+- **Python 3.12, Flask, gunicorn** — backend services
+- **nginx** — frontend static file serving
 
-## How It Works
+## Database Schema
 
-1. A vendor sends an invoice email with PDF attachment to the processor inbox
-2. Gmail push notification triggers the email-parser Cloud Run service
-3. Parser downloads the PDF and uploads it to Cloud Storage
-4. Parser publishes an event to Pub/Sub with the file location
-5. invoice-worker picks up the event and downloads the PDF
-6. Gemini 2.5 Flash classifies the document and extracts: vendor, invoice number, date, total amount
-7. Extracted data is written to PostgreSQL
-8. Dashboard updates automatically within 30 seconds
+- **raw_emails** — one row per email received (gmail_message_id, sender, subject, gcs_folder)
+- **invoices** — one row per processed attachment (inv_number, from_vendor, inv_date, grand_total, confidence, status)
+- **processing_jobs** — tracks GCS path processing status (processing, processed, review, failed, skipped)
+- **pipeline_metrics** — outcome logging per attachment (confidence, null_field_count, pre_filter_reason)
+- **gmail_state** — stores last processed Gmail history ID to ensure no emails are missed
 
 ## Repo Structure
 
     email-parser/        Cloud Run parser service
-    invoice-worker/      Cloud Run worker service with Gemini
-    dashboard-api/       Flask read API for dashboard
-    dashboard-frontend/  Static HTML/CSS/JS dashboard
+    invoice-worker/      Cloud Run worker service with Gemini AI
+    dashboard-api/       Flask read-only API for dashboard
+    dashboard-frontend/  Static HTML/CSS/JS dashboard (nginx)
